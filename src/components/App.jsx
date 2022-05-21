@@ -1,5 +1,5 @@
 import styles from './App.module.css';
-import { Component } from 'react';
+import { useState, useEffect } from 'react';
 import { ToastContainer } from 'react-toastify';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -7,132 +7,86 @@ import { Searchbar } from './Searchbar';
 import { ImageGallery } from './ImageGallery';
 import { Loader } from './Loader';
 import { Button } from './Button';
-import { FetchImages } from 'services/images-api';
+import { fetchImages } from 'services/images-api';
 import { Modal } from './Modal';
-import { applyDarkTheme } from 'services/theme-switcher';
+import { applyDarkTheme } from 'components/Themes/theme-switcher';
 
-export class App extends Component {
-  state = {
-    searchQuery: '',
-    queryResult: [],
-    loading: false,
-    currentPage: 1,
-    isModalOpen: false,
-    modalImage: null,
-    totalQueryResult: 0,
-    isDarkTheme: false,
-  };
+export function App() {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [queryResult, setQueryResult] = useState([]);
+  const [totalQueryResult, setTotalQueryResult] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalImage, setModalImage] = useState(null);
+  const [isDarkTheme, setIsDarkTheme] = useState(false);
 
-  componentDidUpdate(prevProps, prevState) {
-    const { currentPage, searchQuery } = this.state;
-    const prevPage = prevState.currentPage;
-    const prevSearchQuery = prevState.searchQuery;
-
-    if (prevSearchQuery !== searchQuery) {
-      this.setState({ loading: true, queryResult: [] });
-      this.handleFetch(prevPage, prevSearchQuery);
+  useEffect(() => {
+    if (searchQuery === '') {
+      return;
     }
 
-    if (prevSearchQuery === searchQuery && prevPage !== currentPage) {
-      this.setState({ loading: true });
-      this.handleFetch(prevPage, prevSearchQuery);
-    }
-  }
-
-  handleFormSubmit = searchQuery => {
-    this.setState({ searchQuery, currentPage: 1 });
-  };
-
-  handleFetch = (prevPage, prevSearchQuery) => {
-    const { currentPage, searchQuery } = this.state;
-
-    FetchImages(currentPage, searchQuery)
+    setLoading(true);
+    fetchImages(currentPage, searchQuery)
       .then(images => {
         if (images.hits.length === 0) {
           toast.info('No images found for this query');
-          return this.setState({
-            queryResult: [],
-            currentPage: 1,
-          });
+          setQueryResult([]);
+          setCurrentPage(1);
         }
-        if (prevSearchQuery !== searchQuery) {
-          this.setState({
-            queryResult: images.hits,
-            totalQueryResult: images.totalHits,
-          });
-        }
-        if (prevSearchQuery === searchQuery && prevPage !== currentPage) {
-          this.setState(prevState => ({
-            queryResult: [...prevState.queryResult, ...images.hits],
-          }));
-        }
+
+        setQueryResult(prevState => [...prevState, ...images.hits]);
+        setTotalQueryResult(images.totalHits);
       })
       .catch(response => {
         console.log(response);
       })
-      .finally(() => this.setState({ loading: false }));
-  };
+      .finally(() => setLoading(false));
+  }, [searchQuery, currentPage]);
 
-  incrementPage = () => {
-    this.setState(prevState => ({
-      currentPage: prevState.currentPage + 1,
-    }));
-  };
-
-  toggleModal = () => {
-    this.setState(prevState => ({
-      isModalOpen: !prevState.isModalOpen,
-    }));
-    document.body.style.overflow = this.state.isModalOpen ? 'auto' : 'hidden';
-  };
-
-  enlargeImage = clickedImage => {
-    this.toggleModal();
-    this.setState({
-      modalImage: clickedImage,
-    });
-  };
-
-  toggleTheme = () => {
-    this.setState(prevState => ({
-      isDarkTheme: !prevState.isDarkTheme,
-    }));
-
-    applyDarkTheme(this.state.isDarkTheme);
-  };
-
-  render() {
-    const {
-      searchQuery,
-      queryResult,
-      loading,
-      isModalOpen,
-      modalImage,
-      totalQueryResult,
-    } = this.state;
-
-    return (
-      <div className={styles.App}>
-        <ToastContainer autoClose={3000} />
-        <Searchbar
-          onSubmit={this.handleFormSubmit}
-          changeTheme={this.toggleTheme}
-        />
-        {queryResult && (
-          <ImageGallery images={queryResult} openModal={this.enlargeImage} />
-        )}
-        {isModalOpen && (
-          <Modal
-            largeImageURL={modalImage}
-            onClose={this.toggleModal}
-            description={searchQuery}
-          />
-        )}
-        {loading && <Loader />}
-        {queryResult.length > 11 &&
-          queryResult.length !== totalQueryResult &&
-          !loading && <Button onClick={this.incrementPage} />}
-      </div>
-    );
+  function handleFormSubmit(searchQuery) {
+    setSearchQuery(searchQuery);
+    setQueryResult([]);
+    setCurrentPage(1);
   }
+
+  function incrementPage() {
+    setCurrentPage(prevState => prevState + 1);
+  }
+
+  function toggleModal() {
+    setIsModalOpen(prevState => !prevState);
+    document.body.style.overflow = isModalOpen ? 'auto' : 'hidden';
+  }
+
+  function enlargeImage(clickedImage) {
+    toggleModal();
+    setModalImage(clickedImage);
+  }
+
+  function toggleTheme() {
+    setIsDarkTheme(prevState => !prevState);
+    applyDarkTheme(isDarkTheme);
+  }
+
+  return (
+    <div className={styles.App}>
+      <ToastContainer autoClose={3000} />
+      <Searchbar onSubmit={handleFormSubmit} changeTheme={toggleTheme} />
+      {queryResult && (
+        <ImageGallery images={queryResult} openModal={enlargeImage} />
+      )}
+      {isModalOpen && (
+        <Modal
+          largeImageURL={modalImage}
+          onClose={toggleModal}
+          description={searchQuery}
+        />
+      )}
+      {loading && <Loader />}
+      {queryResult.length > 11 &&
+        queryResult.length !== totalQueryResult &&
+        !loading && <Button onClick={incrementPage} />}
+    </div>
+  );
 }

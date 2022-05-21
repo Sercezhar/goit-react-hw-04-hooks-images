@@ -9,7 +9,7 @@ export function Loader() {
         height={40}
         width={40}
         strokeWidth={5}
-        color="#ffd166"
+        color="#ffd60a"
         secondaryColor="#ccc"
       />
     </div>

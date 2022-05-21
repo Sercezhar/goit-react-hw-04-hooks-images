@@ -1,4 +1,4 @@
-export function FetchImages(page, query) {
+export function fetchImages(page, query) {
   const API_KEY = '25743920-c7da85e05a5524610af3b91e0';
 
   return fetch(

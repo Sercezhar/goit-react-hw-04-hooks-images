@@ -3,8 +3,9 @@
 :root {
   --text-color: #848383;
   --bg-color: #fff;
-  --theme-color: #ffd166;
-  --theme-color-hover: #fcc75d;
+  --theme-color: #00a7e1;
+  --button-color: #ffd60a;
+  --theme-color-hover: #ffc300;
 }
 
 html {
