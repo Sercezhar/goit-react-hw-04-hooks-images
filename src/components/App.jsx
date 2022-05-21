@@ -52,6 +52,13 @@ export function App() {
 
   function incrementPage() {
     setCurrentPage(prevState => prevState + 1);
+
+    setTimeout(() => {
+      window.scrollBy({
+        top: document.documentElement.clientHeight - 160,
+        behavior: 'smooth',
+      });
+    }, 500);
   }
 
   function toggleModal() {
