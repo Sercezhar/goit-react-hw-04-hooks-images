@@ -49,7 +49,7 @@ export function App() {
       top: document.documentElement.clientHeight - 160,
       behavior: 'smooth',
     });
-  });
+  }, [queryResult]);
 
   function handleFormSubmit(searchQuery) {
     setSearchQuery(searchQuery);
