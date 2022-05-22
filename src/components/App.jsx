@@ -1,5 +1,5 @@
 import styles from './App.module.css';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useLayoutEffect } from 'react';
 import { ToastContainer } from 'react-toastify';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -31,8 +31,6 @@ export function App() {
       .then(images => {
         if (images.hits.length === 0) {
           toast.info('No images found for this query');
-          setQueryResult([]);
-          setCurrentPage(1);
         }
 
         setQueryResult(prevState => [...prevState, ...images.hits]);
@@ -44,6 +42,15 @@ export function App() {
       .finally(() => setLoading(false));
   }, [searchQuery, currentPage]);
 
+  useLayoutEffect(() => {
+    if (queryResult.length < 13) return;
+
+    window.scrollBy({
+      top: document.documentElement.clientHeight - 160,
+      behavior: 'smooth',
+    });
+  });
+
   function handleFormSubmit(searchQuery) {
     setSearchQuery(searchQuery);
     setQueryResult([]);
@@ -52,13 +59,6 @@ export function App() {
 
   function incrementPage() {
     setCurrentPage(prevState => prevState + 1);
-
-    setTimeout(() => {
-      window.scrollBy({
-        top: document.documentElement.clientHeight - 160,
-        behavior: 'smooth',
-      });
-    }, 500);
   }
 
   function toggleModal() {
